@@ -11,8 +11,9 @@ import Stripe from "stripe";
 const Container = styled('div', {
   display: 'flex',
   width: '100%',
-  maxWidth: 'calc(1180px + ((100vw - 1180px) / 2))',
-  marginLeft: 'auto',
+  maxWidth: 1180,
+  margin: '0 auto',
+  overflowX: 'hidden',
   minHeight: 656
 });
 
@@ -85,7 +86,7 @@ type HomeProps = {
 export default function Home({ products }: HomeProps) {
   const [keenSliderRef] = useKeenSlider({
     slides: {
-      perView: 3,
+      perView: 2,
       spacing: 48
     }
   })
