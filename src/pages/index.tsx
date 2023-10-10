@@ -6,6 +6,7 @@ import { useKeenSlider } from 'keen-slider/react';
 
 import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
+import Link from "next/link";
 
 
 const Container = styled('div', {
@@ -17,12 +18,13 @@ const Container = styled('div', {
   minHeight: 656
 });
 
-const Product = styled('a', {
+const Product = styled('div', {
   position: 'relative',
 
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
+  height: '100%',
   
   background: 'linear-gradient(180deg, #1ea483 0%, #7465d4 100%)',
   borderRadius: 8,
@@ -53,6 +55,7 @@ const Product = styled('a', {
     transition: 'all 0.2s ease-in-out',
 
     span: {
+      color: '$gray100',
       fontSize: '1.25rem',
       fontWeight: 'bold',
       lineHeight: '1.6'
@@ -79,7 +82,7 @@ type HomeProps = {
     id: string,
     name: string,
     imageUrl: string,
-    price: number
+    price: string
   }[]
 }
 
@@ -95,22 +98,24 @@ export default function Home({ products }: HomeProps) {
     <Container ref={keenSliderRef} className="keen-slider">
       {products.map(product => {
         return (
-          <Product key={product.id} className="keen-slider__slide" >
-            <Image 
-              src={product.imageUrl}
-              width={520}
-              height={480}
-              alt=""
-            />
-            <footer>
-              <span>
-                {product.name}
-              </span>
-              <strong>
-                {product.price}
-              </strong>
-            </footer>
-          </Product>
+          <Link href={`/product/${product.id}`} key={product.id} prefetch={false}>
+            <Product className="keen-slider__slide" >
+              <Image 
+                src={product.imageUrl}
+                width={520}
+                height={480}
+                alt=""
+              />
+              <footer>
+                <span>
+                  {product.name}
+                </span>
+                <strong>
+                  {product.price}
+                </strong>
+              </footer>
+            </Product>
+          </Link>
         )
       })}
     </Container>
