@@ -6,6 +6,19 @@ import Image from "next/image";
 import Link from "next/link";
 import Stripe from "stripe";
 
+import logoImg from '../../../public/assets/logo.svg';
+
+const HeaderContainer = styled('div', {
+  padding: '2rem 0',
+  width: '100%',
+  maxWidth: 1180,
+  margin: '0 auto',
+
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center'
+});
+
 const SuccessContainer = styled('main', {
   maxWidth: 590,
   margin: '0 auto',
@@ -32,6 +45,7 @@ const SuccessContainer = styled('main', {
 
   a: {
     fontSize: '1.25rem',
+    fontWeight: 'bold',
     color: '$green500',
     textDecoration: 'none',
     marginTop: '5.5rem',
@@ -42,35 +56,55 @@ const SuccessContainer = styled('main', {
   }
 });
 
-const ImageContainer = styled('div', {
+const ImageList = styled('div', {
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
 
-  height: 145,
-  width: 127,
   marginLeft: 'auto',
   marginRight: 'auto',
   marginTop: '4rem',
+})
 
-  background: 'linear-gradient(180deg, #1ea483 0%, #7465d4 100%)',
-  borderRadius: 8,
-  padding: '0.25rem',
+const ImageContainer = styled('div', {
+  height: 145,
+  width: 95,
 
-  img: {
-    objectFit: 'cover'
+  div: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    width: 145,
+    height: 145,
+
+    marginLeft: 'calc((95px - 145px) / 2)',
+
+    background: 'linear-gradient(180deg, #1ea483 0%, #7465d4 100%)',
+    borderRadius: 250,
+
+    filter: 'drop-shadow(0px 0px 10px #000000)',
+
+    img: {
+      objectFit: 'cover'
+    }
   }
 })
 
 type SuccessProps = {
   customerName: string,
-  product: {
-    name: string,
-    imageUrl: string
-  }
+  products: {
+    name: string;
+    amount: number;
+    imageUrl: string;
+  }[]
 }
 
-export default function Success({ customerName, product }: SuccessProps) {
+export default function Success({ customerName, products }: SuccessProps) {
+  if (!products) return <></>;
+
+  const amount = products.reduce((acc, cur) => acc + cur.amount, 0);
+
   return (
     <>
       <Head>
@@ -79,21 +113,34 @@ export default function Success({ customerName, product }: SuccessProps) {
         <meta name="robots" content="noindex" />
       </Head>
 
+      <HeaderContainer>
+        <Image src={logoImg.src} width={130} height={52} alt="" />
+      </HeaderContainer>
+
       <SuccessContainer>
+        <ImageList>
+          {products.map(product => {
+            return (
+              <ImageContainer key={product.name}>
+                <div>
+                  <Image
+                    
+                    alt=""
+                    src={product.imageUrl}
+                    height={140}
+                    width={130}
+                  />
+                </div>
+              </ImageContainer>
+            )
+          })}
+        </ImageList>
+
         <h1>Compra efetuada!</h1>
 
-        <ImageContainer>
-          <Image 
-            alt="" 
-            src={product.imageUrl}
-            height={106}
-            width={114}
-          />
-        </ImageContainer>
+        <p>Uhuul <strong>{customerName}</strong>, sua compra de { amount } camisetas já está a caminho da sua casa. </p>
 
-        <p>Uhuul <strong>{ customerName }</strong>, sua <strong>{ product.name }</strong> já está a caminho da sua casa. </p>
-
-        <Link href={'/'}>Volar ao catálogo</Link>
+        <Link href={'/'}>Voltar ao catálogo</Link>
       </SuccessContainer>
     </>
   )
@@ -116,15 +163,20 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
   });
 
   const customerName = response.customer_details?.name;
-  const product = response.line_items!.data[0].price?.product as Stripe.Product;
+  const products = response.line_items!.data.map(item => {
+    const product = item.price?.product as Stripe.Product;
+
+    return {
+      name: product.name,
+      amount: item.quantity,
+      imageUrl: product.images[0]
+    }
+  })
   
   return {
     props: {
       customerName,
-      product: {
-        name: product.name,
-        imageUrl: product.images[0]
-      }
+      products: products
     }
   }
 }

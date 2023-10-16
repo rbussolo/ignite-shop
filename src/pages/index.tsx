@@ -1,90 +1,29 @@
 import { GetStaticProps } from "next";
 import Image from "next/image";
 
-import { styled } from "@/styles"
 import { useKeenSlider } from 'keen-slider/react';
 
 import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
 import Link from "next/link";
 import Head from "next/head";
+import { Header } from "@/components/Header";
+import { Handbag } from "@phosphor-icons/react";
+import { ShoppingContext } from "@/context/ShoppingContext";
+import { useContext } from "react";
+import { Container, HandBagButton, Product, ProductFooterCart, ProductFooterDetail } from "@/styles";
 
-
-const Container = styled('div', {
-  display: 'flex',
-  width: '100%',
-  maxWidth: 1180,
-  margin: '0 auto',
-  overflowX: 'hidden',
-  minHeight: 656
-});
-
-const Product = styled('div', {
-  position: 'relative',
-
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  height: '100%',
-  
-  background: 'linear-gradient(180deg, #1ea483 0%, #7465d4 100%)',
-  borderRadius: 8,
-
-  overflow: 'hidden',
-  cursor: 'pointer',
-
-  img: {
-    objectFit: 'cover'
-  },
-
-  footer: {
-    position: 'absolute',
-    left: '0.25rem',
-    bottom: '0.25rem',
-    right: '0.25rem',
-
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignContent: 'center',
-
-    padding: '2rem',
-    background: 'rgba(0,0,0,0.6)',
-    borderRadius: 6,
-
-    transform: 'translateY(110%)',
-    opacity: 0,
-    transition: 'all 0.2s ease-in-out',
-
-    span: {
-      color: '$gray100',
-      fontSize: '1.25rem',
-      fontWeight: 'bold',
-      lineHeight: '1.6'
-    },
-
-    strong: {
-      fontSize: '1.5rem',
-      fontWeight: 'bold',
-      lineHeight: '1.4',
-      color: '$green300'
-    }
-  },
-
-  '&:hover': {
-    footer: {
-      transform: 'translateY(0%)',
-      opacity: 1,
-    }
-  }
-});
+type Product = {
+  id: string,
+  name: string,
+  imageUrl: string,
+  price: number,
+  priceFormatted: string,
+  defaultPriceId: string,
+}
 
 type HomeProps = {
-  products: {
-    id: string,
-    name: string,
-    imageUrl: string,
-    price: string
-  }[]
+  products: Product[]
 }
 
 export default function Home({ products }: HomeProps) {
@@ -93,13 +32,23 @@ export default function Home({ products }: HomeProps) {
       perView: 2,
       spacing: 48
     }
-  })
+  });
+
+  const { addProduct } = useContext(ShoppingContext);
+
+  function handleAddProduct(event: React.MouseEvent<HTMLElement>, product: Product) {
+    event.preventDefault();
+
+    addProduct(product, 1);
+  }
 
   return (
     <>
       <Head>
         <title>Home | Ignite Shop</title>
       </Head>
+
+      <Header />
 
       <Container ref={keenSliderRef} className="keen-slider">
         {products.map(product => {
@@ -113,12 +62,19 @@ export default function Home({ products }: HomeProps) {
                   alt=""
                 />
                 <footer>
-                  <span>
-                    {product.name}
-                  </span>
-                  <strong>
-                    {product.price}
-                  </strong>
+                  <ProductFooterDetail>
+                    <span>
+                      {product.name}
+                    </span>
+                    <strong>
+                      {product.priceFormatted}
+                    </strong>
+                  </ProductFooterDetail>
+                  <ProductFooterCart>
+                    <HandBagButton type="button" onClick={(event) => handleAddProduct(event, product)}>
+                      <Handbag weight="bold" size={32} />
+                    </HandBagButton>
+                  </ProductFooterCart>
                 </footer>
               </Product>
             </Link>
@@ -141,10 +97,12 @@ export const getStaticProps: GetStaticProps = async () => {
       id: product.id,
       name: product.name,
       imageUrl: product.images[0],
-      price: new Intl.NumberFormat('pt-BR', {
+      price: price.unit_amount! / 100,
+      priceFormatted: new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'
-      }).format(price.unit_amount! / 100)
+      }).format(price.unit_amount! / 100),
+      defaultPriceId: price.id
     }
   })
 

@@ -1,15 +1,20 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { stripe } from "@/lib/stripe";
+import { ShoppingCart } from "@/context/ShoppingContext";
+
+type RequestBody = {
+  shoppingCart: ShoppingCart
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { priceId } = req.body;
+  const { shoppingCart } = req.body as RequestBody;
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed!" });
   }
 
-  if (!priceId) {
-    return res.status(400).json({ error: "PriceId is required!" });
+  if (!shoppingCart) {
+    return res.status(400).json({ error: "Shopping cart is required!" });
   }
 
   const success_url = `${process.env.NEXT_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
@@ -19,10 +24,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     success_url,
     cancel_url,
     mode: 'payment',
-    line_items: [{
-      price: priceId,
-      quantity: 1
-    }]
+    line_items: shoppingCart.items.map(item => {
+      return {
+        price: item.product.defaultPriceId,
+        quantity: item.amount
+      }
+    })
   });
 
   return res.status(201).json(checkoutSession);
